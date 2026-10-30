@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Legend,
 } from "recharts";
 import { logHabit, getAllEntries, deleteEntry, type HabitEntry } from "@/lib/db";
 import { HABITS } from "@/lib/habits";
@@ -152,7 +153,7 @@ export default function Home() {
           <h2 className="text-xl font-semibold mb-4">Usage Over Time</h2>
           <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--background)" }}>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={dailyCounts}>
+              <BarChart data={dailyCounts}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis
                   dataKey="date"
@@ -174,19 +175,17 @@ export default function Home() {
                     })
                   }
                 />
+                <Legend />
                 {HABITS.map((habit) => (
-                  <Line
+                  <Bar
                     key={habit.id}
-                    type="monotone"
                     dataKey={habit.id}
                     name={habit.label}
-                    stroke={habit.color}
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                    activeDot={{ r: 5 }}
+                    fill={habit.color}
+                    radius={[3, 3, 0, 0]}
                   />
                 ))}
-              </LineChart>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </section>
