@@ -14,7 +14,10 @@ import { logHabit, getAllEntries, deleteEntry, type HabitEntry } from "@/lib/db"
 import { HABITS } from "@/lib/habits";
 import { HABIT_ICONS } from "@/components/HabitIcons";
 
-type DailyCount = { date: string } & Record<string, number>;
+interface DailyCount {
+  date: string;
+  [key: string]: string | number;
+}
 
 function computeDailyCounts(entries: HabitEntry[]): DailyCount[] {
   const byDate: Record<string, Record<string, number>> = {};
@@ -163,8 +166,8 @@ export default function Home() {
                 />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                 <Tooltip
-                  labelFormatter={(v: string) =>
-                    new Date(v + "T00:00:00").toLocaleDateString(undefined, {
+                  labelFormatter={(v) =>
+                    new Date(String(v) + "T00:00:00").toLocaleDateString(undefined, {
                       weekday: "short",
                       month: "short",
                       day: "numeric",
