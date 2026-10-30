@@ -33,76 +33,18 @@ function computeDailyCounts(entries: HabitEntry[]): DailyCount[] {
   }));
 }
 
-function getTrend(entries: HabitEntry[], habit: string): "up" | "down" | "flat" {
-  const now = Date.now();
-  const week = 7 * 24 * 60 * 60 * 1000;
-  const thisWeek = entries.filter(
-    (e) => e.habit === habit && e.timestamp > now - week
-  ).length;
-  const lastWeek = entries.filter(
-    (e) =>
-      e.habit === habit &&
-      e.timestamp > now - 2 * week &&
-      e.timestamp <= now - week
-  ).length;
-  if (thisWeek > lastWeek) return "up";
-  if (thisWeek < lastWeek) return "down";
-  return "flat";
-}
 
-function TrendArrow({ direction }: { direction: "up" | "down" | "flat" }) {
-  if (direction === "up")
-    return <span className="text-red-500 text-2xl font-bold" title="Usage up vs last week">↑</span>;
-  if (direction === "down")
-    return <span className="text-green-500 text-2xl font-bold" title="Usage down vs last week">↓</span>;
-  return <span className="text-gray-400 text-2xl" title="Same as last week">→</span>;
-}
-
-function getWeekData(entries: HabitEntry[], habit: string): number[] {
-  const now = new Date();
-  const counts: number[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const day = new Date(now);
-    day.setDate(day.getDate() - i);
-    const dayStr = day.toDateString();
-    counts.push(
-      entries.filter(
-        (e) => e.habit === habit && new Date(e.timestamp).toDateString() === dayStr
-      ).length
-    );
-  }
-  return counts;
-}
-
-function Sparkline({ data, color }: { data: number[]; color: string }) {
-  const daysWithData = data.filter((v) => v > 0).length;
-  if (daysWithData <= 1) return null;
-
-  const max = Math.max(...data, 1);
-  const barWidth = 8;
-  const gap = 3;
-  const height = 32;
-  const width = data.length * (barWidth + gap) - gap;
-
-  return (
-    <svg width={width} height={height} className="mt-1">
-      {data.map((v, i) => {
-        const barHeight = (v / max) * (height - 2);
-        return (
-          <rect
-            key={i}
-            x={i * (barWidth + gap)}
-            y={height - barHeight}
-            width={barWidth}
-            height={barHeight}
-            rx={2}
-            fill={color}
-            opacity={i === data.length - 1 ? 1 : 0.5}
-          />
-        );
-      })}
-    </svg>
-  );
+function timeSinceLast(entries: HabitEntry[], habit: string): string {
+  const last = entries.find((e) => e.habit === habit);
+  if (!last) return "never";
+  const diff = Date.now() - last.timestamp;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ${mins % 60}m ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ${hours % 24}h ago`;
 }
 
 function formatTime(ts: number): string {
@@ -156,9 +98,7 @@ export default function Home() {
       {/* Habit buttons */}
       <div className="grid grid-cols-2 gap-4 mb-10">
         {HABITS.map((habit) => {
-          const trend = getTrend(entries, habit.id);
-          const weekData = getWeekData(entries, habit.id);
-          const todayCount = weekData[weekData.length - 1];
+          const since = timeSinceLast(entries, habit.id);
 
           return (
             <button
@@ -178,13 +118,7 @@ export default function Home() {
               >
                 {habit.label}
               </span>
-              <Sparkline data={weekData} color={habit.color} />
-              <div className="flex items-center gap-2">
-                <TrendArrow direction={trend} />
-                <span className="text-sm opacity-60">
-                  {todayCount} today
-                </span>
-              </div>
+              <span className="text-sm opacity-60">{since}</span>
             </button>
           );
         })}
