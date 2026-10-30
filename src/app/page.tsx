@@ -59,6 +59,53 @@ function TrendArrow({ direction }: { direction: "up" | "down" | "flat" }) {
   return <span className="text-gray-400 text-2xl" title="Same as last week">→</span>;
 }
 
+function getWeekData(entries: HabitEntry[], habit: string): number[] {
+  const now = new Date();
+  const counts: number[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date(now);
+    day.setDate(day.getDate() - i);
+    const dayStr = day.toDateString();
+    counts.push(
+      entries.filter(
+        (e) => e.habit === habit && new Date(e.timestamp).toDateString() === dayStr
+      ).length
+    );
+  }
+  return counts;
+}
+
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  const daysWithData = data.filter((v) => v > 0).length;
+  if (daysWithData <= 1) return null;
+
+  const max = Math.max(...data, 1);
+  const barWidth = 8;
+  const gap = 3;
+  const height = 32;
+  const width = data.length * (barWidth + gap) - gap;
+
+  return (
+    <svg width={width} height={height} className="mt-1">
+      {data.map((v, i) => {
+        const barHeight = (v / max) * (height - 2);
+        return (
+          <rect
+            key={i}
+            x={i * (barWidth + gap)}
+            y={height - barHeight}
+            width={barWidth}
+            height={barHeight}
+            rx={2}
+            fill={color}
+            opacity={i === data.length - 1 ? 1 : 0.5}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleString(undefined, {
     month: "short",
@@ -103,39 +150,37 @@ export default function Home() {
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8">
+    <main className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-center mb-2">Bad Habits</h1>
       <p className="text-center opacity-50 mb-8">Track it to beat it</p>
 
       {/* Habit buttons */}
-      <div className="grid grid-cols-4 gap-3 mb-10">
+      <div className="grid grid-cols-2 gap-4 mb-10">
         {HABITS.map((habit) => {
           const Icon = HABIT_ICONS[habit.id];
           const trend = getTrend(entries, habit.id);
-          const todayCount = entries.filter(
-            (e) =>
-              e.habit === habit.id &&
-              new Date(e.timestamp).toDateString() === new Date().toDateString()
-          ).length;
+          const weekData = getWeekData(entries, habit.id);
+          const todayCount = weekData[weekData.length - 1];
 
           return (
             <button
               key={habit.id}
               onClick={() => handleLog(habit.id)}
-              className="flex flex-col items-center gap-1 p-4 rounded-2xl border-2 transition-all
+              className="flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all
                 hover:scale-105 active:scale-95 cursor-pointer"
               style={{
                 backgroundColor: habit.bgColor,
                 borderColor: habit.color + "40",
               }}
             >
-              <Icon size={44} />
+              <Icon size={48} />
               <span
                 className="font-semibold text-lg"
                 style={{ color: habit.color }}
               >
                 {habit.label}
               </span>
+              <Sparkline data={weekData} color={habit.color} />
               <div className="flex items-center gap-2">
                 <TrendArrow direction={trend} />
                 <span className="text-sm opacity-60">
