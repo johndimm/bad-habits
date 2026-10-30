@@ -30,13 +30,13 @@ export function EspressoIcon({ size = 64 }: { size?: number }) {
         opacity="0.6"
       />
       {/* Cup body */}
-      <rect x="14" y="22" width="36" height="28" rx="4" fill="#6F4E37" />
+      <rect x="14" y="22" width="36" height="28" rx="4" fill="#8B4513" />
       {/* Coffee surface */}
-      <rect x="14" y="22" width="36" height="8" rx="4" fill="#4A3120" />
+      <rect x="14" y="22" width="36" height="8" rx="4" fill="#5C2D0E" />
       {/* Handle */}
       <path
         d="M50 30C56 30 58 36 58 40C58 44 56 48 50 48"
-        stroke="#6F4E37"
+        stroke="#8B4513"
         strokeWidth="4"
         strokeLinecap="round"
         fill="none"
@@ -59,7 +59,7 @@ export function BeerIcon({ size = 64 }: { size?: number }) {
       {/* Glass body */}
       <path
         d="M12 12L16 56H44L48 12H12Z"
-        fill="#F9A825"
+        fill="#E6A817"
         opacity="0.85"
       />
       {/* Foam */}
@@ -83,7 +83,7 @@ export function BeerIcon({ size = 64 }: { size?: number }) {
       {/* Handle */}
       <path
         d="M48 20C54 20 56 28 56 34C56 40 54 46 48 46"
-        stroke="#F9A825"
+        stroke="#E6A817"
         strokeWidth="4"
         strokeLinecap="round"
         fill="none"

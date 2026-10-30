@@ -1,0 +1,18 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="14" fill="#1a1a1a"/>
+  <!-- Espresso cup (top-left) -->
+  <rect x="8" y="12" width="14" height="10" rx="2" fill="#8B4513"/>
+  <path d="M22 15C24 15 25 17 25 19C25 21 24 22 22 22" stroke="#8B4513" stroke-width="1.5" fill="none"/>
+  <!-- Beer glass (top-right) -->
+  <path d="M36 10L37.5 24H48.5L50 10H36Z" fill="#E6A817" opacity="0.9"/>
+  <ellipse cx="43" cy="10" rx="7.5" ry="2.5" fill="#FFF9C4"/>
+  <!-- Vape (bottom-left) -->
+  <rect x="13" y="32" width="6" height="22" rx="3" fill="#546E7A"/>
+  <rect x="14.5" y="30" width="3" height="5" rx="1.5" fill="#37474F"/>
+  <circle cx="16" cy="43" r="1" fill="#4FC3F7" opacity="0.8"/>
+  <!-- Pot leaf (bottom-right) -->
+  <path d="M47 34C45 38 45 42 47 44C49 42 49 38 47 34Z" fill="#4CAF50"/>
+  <path d="M41 38C43 40 45 42 47 44C45 40 43 38 41 38Z" fill="#4CAF50"/>
+  <path d="M53 38C51 40 49 42 47 44C49 40 51 38 53 38Z" fill="#4CAF50"/>
+  <path d="M47 44V50" stroke="#388E3C" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
