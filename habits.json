@@ -2,5 +2,5 @@
   { "id": "espresso", "label": "Espresso", "icon": "☕", "color": "#8B4513", "bgColor": "#F5E6D3" },
   { "id": "beer",     "label": "Beer",     "icon": "🍺", "color": "#E6A817", "bgColor": "#FFF8E1" },
   { "id": "vape",     "label": "Vape",     "icon": "💨", "color": "#607D8B", "bgColor": "#ECEFF1" },
-  { "id": "pot",      "label": "Pot",      "icon": "🌿", "color": "#4CAF50", "bgColor": "#E8F5E9" }
+  { "id": "pot",      "label": "Pot",      "icon": "🚬", "color": "#4CAF50", "bgColor": "#E8F5E9" }
 ]
