@@ -1,0 +1,18 @@
+I want to make a nextjs app to log my bad habits.  They are
+
+- espresso
+- beer
+- vape
+- pot
+
+I want to click a button on the app whenever I do any of those.  It will log the action along with the datetime.
+
+Find images to use in the app for each.
+
+Store the data in the browser, in IndexedDB.
+
+Show an up or down arrow to indicate that use is going down or up.
+
+Graph usage over time.
+
+
