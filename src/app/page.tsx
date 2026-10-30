@@ -118,7 +118,7 @@ export default function Home() {
               >
                 {habit.label}
               </span>
-              <span className="text-sm opacity-60">{since}</span>
+              <span className="text-sm" style={{ color: habit.color, opacity: 0.7 }}>{since}</span>
             </button>
           );
         })}
