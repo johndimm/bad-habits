@@ -103,12 +103,12 @@ export default function Home() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8">
+    <main className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-center mb-2">Bad Habits</h1>
       <p className="text-center opacity-50 mb-8">Track it to beat it</p>
 
       {/* Habit buttons */}
-      <div className="grid grid-cols-2 gap-4 mb-10">
+      <div className="grid grid-cols-4 gap-3 mb-10">
         {HABITS.map((habit) => {
           const Icon = HABIT_ICONS[habit.id];
           const trend = getTrend(entries, habit.id);
@@ -122,14 +122,14 @@ export default function Home() {
             <button
               key={habit.id}
               onClick={() => handleLog(habit.id)}
-              className="flex flex-col items-center gap-2 p-6 rounded-2xl border-2 transition-all
+              className="flex flex-col items-center gap-1 p-4 rounded-2xl border-2 transition-all
                 hover:scale-105 active:scale-95 cursor-pointer"
               style={{
                 backgroundColor: habit.bgColor,
                 borderColor: habit.color + "40",
               }}
             >
-              <Icon size={56} />
+              <Icon size={44} />
               <span
                 className="font-semibold text-lg"
                 style={{ color: habit.color }}
@@ -175,7 +175,21 @@ export default function Home() {
                     })
                   }
                 />
-                <Legend />
+                <Legend
+                  content={() => (
+                    <div className="flex justify-center gap-4 mt-2">
+                      {HABITS.map((h) => (
+                        <div key={h.id} className="flex items-center gap-1.5">
+                          <span
+                            className="w-3 h-3 rounded-sm inline-block"
+                            style={{ backgroundColor: h.color }}
+                          />
+                          <span className="text-sm">{h.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                />
                 {HABITS.map((habit) => (
                   <Bar
                     key={habit.id}
