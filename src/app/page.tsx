@@ -13,7 +13,6 @@ import {
 } from "recharts";
 import { logHabit, getAllEntries, deleteEntry, type HabitEntry } from "@/lib/db";
 import { HABITS } from "@/lib/habits";
-import { HABIT_ICONS } from "@/components/HabitIcons";
 
 interface DailyCount {
   date: string;
@@ -157,7 +156,6 @@ export default function Home() {
       {/* Habit buttons */}
       <div className="grid grid-cols-2 gap-4 mb-10">
         {HABITS.map((habit) => {
-          const Icon = HABIT_ICONS[habit.id];
           const trend = getTrend(entries, habit.id);
           const weekData = getWeekData(entries, habit.id);
           const todayCount = weekData[weekData.length - 1];
@@ -173,7 +171,7 @@ export default function Home() {
                 borderColor: habit.color + "40",
               }}
             >
-              <Icon size={48} />
+              <span className="text-5xl">{habit.icon}</span>
               <span
                 className="font-semibold text-lg"
                 style={{ color: habit.color }}
