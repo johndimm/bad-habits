@@ -1,11 +1,9 @@
-import habitsData from "../../habits.json";
-
 export interface Habit {
   id: string;
   label: string;
   icon: string;
   color: string;
   bgColor: string;
+  type: "count" | "timed";
+  order: number;
 }
-
-export const HABITS: Habit[] = habitsData;

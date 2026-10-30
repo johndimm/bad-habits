@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   BarChart,
   Bar,
@@ -11,15 +11,26 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
-import { logHabit, getAllEntries, deleteEntry, type HabitEntry } from "@/lib/db";
-import { HABITS } from "@/lib/habits";
+import {
+  logHabit,
+  getAllEntries,
+  deleteEntry,
+  updateEntry,
+  getHabits,
+  type HabitEntry,
+} from "@/lib/db";
+import type { Habit } from "@/lib/habits";
+import HabitEditor from "@/components/HabitEditor";
 
 interface DailyCount {
   date: string;
   [key: string]: string | number;
 }
 
-function computeDailyCounts(entries: HabitEntry[]): DailyCount[] {
+function computeDailyCounts(
+  entries: HabitEntry[],
+  habits: Habit[]
+): DailyCount[] {
   const byDate: Record<string, Record<string, number>> = {};
   for (const e of entries) {
     const date = new Date(e.timestamp).toLocaleDateString("en-CA");
@@ -29,15 +40,17 @@ function computeDailyCounts(entries: HabitEntry[]): DailyCount[] {
   const dates = Object.keys(byDate).sort();
   return dates.map((date) => ({
     date,
-    ...Object.fromEntries(HABITS.map((h) => [h.id, byDate[date][h.id] || 0])),
+    ...Object.fromEntries(
+      habits.map((h) => [h.id, byDate[date][h.id] || 0])
+    ),
   }));
 }
-
 
 function timeSinceLast(entries: HabitEntry[], habit: string): string {
   const last = entries.find((e) => e.habit === habit);
   if (!last) return "never";
-  const diff = Date.now() - last.timestamp;
+  const ts = last.endTimestamp || last.timestamp;
+  const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
@@ -45,6 +58,15 @@ function timeSinceLast(entries: HabitEntry[], habit: string): string {
   if (hours < 24) return `${hours}h ${mins % 60}m ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ${hours % 24}h ago`;
+}
+
+function formatDuration(ms: number): string {
+  const secs = Math.floor(ms / 1000);
+  const mins = Math.floor(secs / 60);
+  const hours = Math.floor(mins / 60);
+  if (hours > 0) return `${hours}h ${mins % 60}m`;
+  if (mins > 0) return `${mins}m ${secs % 60}s`;
+  return `${secs}s`;
 }
 
 function formatTime(ts: number): string {
@@ -57,36 +79,86 @@ function formatTime(ts: number): string {
 }
 
 export default function Home() {
+  const [habits, setHabits] = useState<Habit[]>([]);
   const [entries, setEntries] = useState<HabitEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [showEditor, setShowEditor] = useState(false);
+  const [activeTimers, setActiveTimers] = useState<Record<string, number>>({});
   const [, setTick] = useState(0);
+  const tickRef = useRef<ReturnType<typeof setInterval>>(null);
 
-  const refresh = useCallback(async () => {
+  const refreshHabits = useCallback(async () => {
+    const h = await getHabits();
+    setHabits(h);
+  }, []);
+
+  const refreshEntries = useCallback(async () => {
     const all = await getAllEntries();
     setEntries(all.sort((a, b) => b.timestamp - a.timestamp));
   }, []);
+
+  const refresh = useCallback(async () => {
+    await Promise.all([refreshHabits(), refreshEntries()]);
+  }, [refreshHabits, refreshEntries]);
 
   useEffect(() => {
     refresh().then(() => setLoading(false));
   }, [refresh]);
 
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 60000);
-    return () => clearInterval(id);
+    tickRef.current = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => {
+      if (tickRef.current) clearInterval(tickRef.current);
+    };
   }, []);
 
-  async function handleLog(habit: string) {
-    await logHabit(habit);
-    await refresh();
+  // Restore active timers from entries on load
+  useEffect(() => {
+    if (loading) return;
+    const timers: Record<string, number> = {};
+    for (const e of entries) {
+      if (e.timestamp && !e.endTimestamp) {
+        const habit = habits.find((h) => h.id === e.habit);
+        if (habit?.type === "timed") {
+          timers[e.habit] = e.id!;
+        }
+      }
+    }
+    setActiveTimers(timers);
+  }, [loading, entries, habits]);
+
+  async function handleCount(habitId: string) {
+    await logHabit(habitId);
+    await refreshEntries();
+  }
+
+  async function handleTimedToggle(habitId: string) {
+    const activeEntryId = activeTimers[habitId];
+    if (activeEntryId) {
+      const entry = entries.find((e) => e.id === activeEntryId);
+      if (entry) {
+        await updateEntry({ ...entry, endTimestamp: Date.now() });
+      }
+      setActiveTimers((prev) => {
+        const next = { ...prev };
+        delete next[habitId];
+        return next;
+      });
+      await refreshEntries();
+    } else {
+      const entry = await logHabit(habitId);
+      setActiveTimers((prev) => ({ ...prev, [habitId]: entry.id! }));
+      await refreshEntries();
+    }
   }
 
   async function handleDelete(id: number) {
     await deleteEntry(id);
-    await refresh();
+    await refreshEntries();
   }
 
-  const dailyCounts = computeDailyCounts(entries);
+  const dailyCounts = computeDailyCounts(entries, habits);
 
   if (loading) {
     return (
@@ -98,23 +170,44 @@ export default function Home() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-2">Bad Habits</h1>
+      <div className="flex items-center justify-between mb-2">
+        <div />
+        <h1 className="text-3xl font-bold">Bad Habits</h1>
+        <button
+          onClick={() => setShowEditor(true)}
+          className="text-2xl opacity-40 hover:opacity-100 cursor-pointer"
+          title="Manage habits"
+        >
+          ⚙
+        </button>
+      </div>
       <p className="text-center opacity-50 mb-8">Track it to beat it</p>
 
       {/* Habit buttons */}
       <div className="grid grid-cols-2 gap-4 mb-10">
-        {HABITS.map((habit) => {
+        {habits.map((habit) => {
           const since = timeSinceLast(entries, habit.id);
+          const isTimedActive = !!activeTimers[habit.id];
+          const activeEntry = isTimedActive
+            ? entries.find((e) => e.id === activeTimers[habit.id])
+            : null;
+          const elapsed = activeEntry
+            ? Date.now() - activeEntry.timestamp
+            : 0;
 
           return (
             <button
               key={habit.id}
-              onClick={() => handleLog(habit.id)}
+              onClick={() =>
+                habit.type === "timed"
+                  ? handleTimedToggle(habit.id)
+                  : handleCount(habit.id)
+              }
               className="flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all
                 hover:scale-105 active:scale-95 cursor-pointer"
               style={{
-                backgroundColor: habit.bgColor,
-                borderColor: habit.color + "40",
+                backgroundColor: isTimedActive ? habit.color + "20" : habit.bgColor,
+                borderColor: isTimedActive ? habit.color : habit.color + "40",
               }}
             >
               <span className="text-5xl">{habit.icon}</span>
@@ -124,7 +217,29 @@ export default function Home() {
               >
                 {habit.label}
               </span>
-              <span className="text-sm" style={{ color: habit.color, opacity: 0.7 }}>{since}</span>
+              {isTimedActive ? (
+                <span
+                  className="text-lg font-mono font-bold"
+                  style={{ color: habit.color }}
+                >
+                  {formatDuration(elapsed)}
+                </span>
+              ) : (
+                <span
+                  className="text-sm"
+                  style={{ color: habit.color, opacity: 0.7 }}
+                >
+                  {since}
+                </span>
+              )}
+              {habit.type === "timed" && (
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: habit.color, opacity: 0.6 }}
+                >
+                  {isTimedActive ? "■ stop" : "▶ start"}
+                </span>
+              )}
             </button>
           );
         })}
@@ -134,7 +249,10 @@ export default function Home() {
       {dailyCounts.length > 0 && (
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-4">Usage Over Time</h2>
-          <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--background)" }}>
+          <div
+            className="rounded-xl border p-4"
+            style={{ backgroundColor: "var(--background)" }}
+          >
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={dailyCounts}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -151,17 +269,20 @@ export default function Home() {
                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                 <Tooltip
                   labelFormatter={(v) =>
-                    new Date(String(v) + "T00:00:00").toLocaleDateString(undefined, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })
+                    new Date(String(v) + "T00:00:00").toLocaleDateString(
+                      undefined,
+                      {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      }
+                    )
                   }
                 />
                 <Legend
                   content={() => (
                     <div className="flex justify-center gap-4 mt-2">
-                      {HABITS.map((h) => (
+                      {habits.map((h) => (
                         <div key={h.id} className="flex items-center gap-1.5">
                           <span
                             className="w-3 h-3 rounded-sm inline-block"
@@ -173,7 +294,7 @@ export default function Home() {
                     </div>
                   )}
                 />
-                {HABITS.map((habit) => (
+                {habits.map((habit) => (
                   <Bar
                     key={habit.id}
                     dataKey={habit.id}
@@ -202,7 +323,7 @@ export default function Home() {
           >
             All
           </button>
-          {HABITS.map((h) => (
+          {habits.map((h) => (
             <button
               key={h.id}
               onClick={() => setActiveTab(h.id)}
@@ -222,7 +343,12 @@ export default function Home() {
             .filter((e) => !activeTab || e.habit === activeTab)
             .slice(0, 50)
             .map((e) => {
-              const habit = HABITS.find((h) => h.id === e.habit);
+              const habit = habits.find((h) => h.id === e.habit);
+              const duration =
+                e.endTimestamp && e.timestamp
+                  ? formatDuration(e.endTimestamp - e.timestamp)
+                  : null;
+              const isRunning = !e.endTimestamp && habit?.type === "timed";
               return (
                 <li
                   key={e.id}
@@ -238,6 +364,16 @@ export default function Home() {
                     <span className="text-sm opacity-50">
                       {formatTime(e.timestamp)}
                     </span>
+                    {duration && (
+                      <span className="text-xs font-mono opacity-60">
+                        {duration}
+                      </span>
+                    )}
+                    {isRunning && (
+                      <span className="text-xs font-mono" style={{ color: habit?.color }}>
+                        {formatDuration(Date.now() - e.timestamp)}...
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={(ev) => {
@@ -259,6 +395,16 @@ export default function Home() {
           )}
         </ul>
       </section>
+
+      {showEditor && (
+        <HabitEditor
+          habits={habits}
+          onClose={() => setShowEditor(false)}
+          onSave={() => {
+            refresh();
+          }}
+        />
+      )}
     </main>
   );
 }
