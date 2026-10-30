@@ -60,6 +60,7 @@ export default function Home() {
   const [entries, setEntries] = useState<HabitEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [, setTick] = useState(0);
 
   const refresh = useCallback(async () => {
     const all = await getAllEntries();
@@ -69,6 +70,11 @@ export default function Home() {
   useEffect(() => {
     refresh().then(() => setLoading(false));
   }, [refresh]);
+
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   async function handleLog(habit: string) {
     await logHabit(habit);
