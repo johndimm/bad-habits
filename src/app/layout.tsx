@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bad Habits Tracker",
-  description: "Track and reduce your bad habits over time",
+  title: "Habits",
+  description: "Track your habits, bad or good",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

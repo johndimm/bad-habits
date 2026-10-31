@@ -172,7 +172,7 @@ export default function Home() {
     <main className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-2">
         <div />
-        <h1 className="text-3xl font-bold">Bad Habits</h1>
+        <h1 className="text-3xl font-bold">Habits</h1>
         <button
           onClick={() => setShowEditor(true)}
           className="text-2xl opacity-40 hover:opacity-100 cursor-pointer"
@@ -181,7 +181,7 @@ export default function Home() {
           ⚙
         </button>
       </div>
-      <p className="text-center opacity-50 mb-8">Track it to beat it</p>
+      <p className="text-center opacity-50 mb-8">bad or good</p>
 
       {/* Habit buttons */}
       <div className="grid grid-cols-2 gap-4 mb-10">
@@ -250,7 +250,7 @@ export default function Home() {
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-4">Usage Over Time</h2>
           <div
-            className="rounded-xl border p-4"
+            className="rounded-xl border p-4 overflow-hidden"
             style={{ backgroundColor: "var(--background)" }}
           >
             <ResponsiveContainer width="100%" height={300}>
@@ -258,7 +258,10 @@ export default function Home() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 11 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={50}
                   tickFormatter={(v: string) =>
                     new Date(v + "T00:00:00").toLocaleDateString(undefined, {
                       month: "short",
@@ -281,14 +284,14 @@ export default function Home() {
                 />
                 <Legend
                   content={() => (
-                    <div className="flex justify-center gap-4 mt-2">
+                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
                       {habits.map((h) => (
                         <div key={h.id} className="flex items-center gap-1.5">
                           <span
-                            className="w-3 h-3 rounded-sm inline-block"
+                            className="w-3 h-3 rounded-sm inline-block shrink-0"
                             style={{ backgroundColor: h.color }}
                           />
-                          <span className="text-sm">{h.label}</span>
+                          <span className="text-xs sm:text-sm whitespace-nowrap">{h.label}</span>
                         </div>
                       ))}
                     </div>
