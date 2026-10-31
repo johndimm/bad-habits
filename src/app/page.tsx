@@ -172,7 +172,7 @@ export default function Home() {
     <main className="max-w-2xl mx-auto px-4 py-8">
       <div className="relative mb-8">
         <h1 className="text-3xl font-bold text-center">Habits</h1>
-        <p className="text-center opacity-50">bad or good</p>
+        <p className="text-center opacity-50">bad and good</p>
         <button
           onClick={() => setShowEditor(true)}
           className="absolute right-0 top-1 text-2xl opacity-40 hover:opacity-100 cursor-pointer"
