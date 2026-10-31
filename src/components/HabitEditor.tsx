@@ -295,6 +295,78 @@ export default function HabitEditor({ habits, onClose, onSave }: Props) {
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-1">Goal</label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="number"
+                  min={0}
+                  value={editing.goalCount ?? ""}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      goalCount: e.target.value === "" ? undefined : Number(e.target.value),
+                      goalPeriod: editing.goalPeriod || "day",
+                    })
+                  }
+                  className="w-20 px-3 py-2 rounded-lg border text-center"
+                  style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
+                  placeholder="0"
+                />
+                <span className="text-sm opacity-60">
+                  {editing.type === "timed" ? "min" : "times"} per
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setEditing({ ...editing, goalPeriod: "day" })}
+                    className="px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm"
+                    style={
+                      (editing.goalPeriod || "day") === "day"
+                        ? { backgroundColor: editing.color, color: "white" }
+                        : {}
+                    }
+                  >
+                    day
+                  </button>
+                  <button
+                    onClick={() => setEditing({ ...editing, goalPeriod: "week" })}
+                    className="px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm"
+                    style={
+                      editing.goalPeriod === "week"
+                        ? { backgroundColor: editing.color, color: "white" }
+                        : {}
+                    }
+                  >
+                    week
+                  </button>
+                </div>
+              </div>
+              <div className="flex gap-1 mt-2">
+                <button
+                  onClick={() => setEditing({ ...editing, goalDirection: "atMost" })}
+                  className="flex-1 py-2 rounded-lg border cursor-pointer transition-colors text-sm"
+                  style={
+                    (editing.goalDirection || "atMost") === "atMost"
+                      ? { backgroundColor: editing.color, color: "white" }
+                      : {}
+                  }
+                >
+                  at most (limit)
+                </button>
+                <button
+                  onClick={() => setEditing({ ...editing, goalDirection: "atLeast" })}
+                  className="flex-1 py-2 rounded-lg border cursor-pointer transition-colors text-sm"
+                  style={
+                    editing.goalDirection === "atLeast"
+                      ? { backgroundColor: editing.color, color: "white" }
+                      : {}
+                  }
+                >
+                  at least (target)
+                </button>
+              </div>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-1">Color</label>
               <div className="flex gap-2 flex-wrap">
                 {DEFAULT_COLORS.map((c) => (
@@ -322,9 +394,16 @@ export default function HabitEditor({ habits, onClose, onSave }: Props) {
               <span className="font-semibold" style={{ color: editing.color }}>
                 {editing.label || "Preview"}
               </span>
-              <span className="text-xs ml-auto opacity-60" style={{ color: editing.color }}>
-                {editing.type === "timed" ? "▶ start" : "tap to log"}
-              </span>
+              <div className="ml-auto text-right">
+                {editing.goalCount != null && (
+                  <span className="text-xs block opacity-60" style={{ color: editing.color }}>
+                    0/{editing.goalCount}{editing.type === "timed" ? "m" : ""} {(editing.goalPeriod || "day") === "day" ? "today" : "this week"}
+                  </span>
+                )}
+                <span className="text-xs opacity-60" style={{ color: editing.color }}>
+                  {editing.type === "timed" ? "▶ start" : "tap to log"}
+                </span>
+              </div>
             </div>
 
             <div className="flex gap-2 pt-2">

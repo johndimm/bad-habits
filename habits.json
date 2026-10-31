@@ -1,6 +1,6 @@
 [
-  { "id": "espresso", "label": "Espresso", "icon": "☕", "color": "#8B4513", "bgColor": "#F5E6D3", "type": "count", "order": 0 },
-  { "id": "beer",     "label": "Beer",     "icon": "🍺", "color": "#E6A817", "bgColor": "#FFF8E1", "type": "count", "order": 1 },
-  { "id": "vape",     "label": "Vape",     "icon": "💨", "color": "#607D8B", "bgColor": "#ECEFF1", "type": "count", "order": 2 },
-  { "id": "pot",      "label": "Pot",      "icon": "🚬", "color": "#4CAF50", "bgColor": "#E8F5E9", "type": "count", "order": 3 }
+  { "id": "espresso", "label": "Espresso", "icon": "☕", "color": "#8B4513", "bgColor": "#F5E6D3", "type": "count", "order": 0, "goalCount": 2, "goalPeriod": "day", "goalDirection": "atMost" },
+  { "id": "beer",     "label": "Beer",     "icon": "🍺", "color": "#E6A817", "bgColor": "#FFF8E1", "type": "count", "order": 1, "goalCount": 4, "goalPeriod": "week", "goalDirection": "atMost" },
+  { "id": "vape",     "label": "Vape",     "icon": "💨", "color": "#607D8B", "bgColor": "#ECEFF1", "type": "count", "order": 2, "goalCount": 0, "goalPeriod": "week", "goalDirection": "atMost" },
+  { "id": "pot",      "label": "Pot",      "icon": "🚬", "color": "#4CAF50", "bgColor": "#E8F5E9", "type": "count", "order": 3, "goalCount": 1, "goalPeriod": "week", "goalDirection": "atMost" }
 ]

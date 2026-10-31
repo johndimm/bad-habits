@@ -6,4 +6,7 @@ export interface Habit {
   bgColor: string;
   type: "count" | "timed";
   order: number;
+  goalCount?: number;
+  goalPeriod?: "day" | "week";
+  goalDirection?: "atMost" | "atLeast";
 }

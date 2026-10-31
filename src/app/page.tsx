@@ -69,6 +69,60 @@ function formatDuration(ms: number): string {
   return `${secs}s`;
 }
 
+function getGoalProgress(
+  entries: HabitEntry[],
+  habit: Habit
+): { current: number; goal: number; period: string; bad: boolean; direction: "atMost" | "atLeast" } | null {
+  if (habit.goalCount == null || !habit.goalPeriod) return null;
+  const direction = habit.goalDirection || "atMost";
+
+  const now = new Date();
+  let start: Date;
+  if (habit.goalPeriod === "day") {
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else {
+    const day = now.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff);
+  }
+  const startTs = start.getTime();
+
+  const periodEntries = entries.filter(
+    (e) => e.habit === habit.id && e.timestamp >= startTs
+  );
+
+  let current: number;
+  if (habit.type === "timed") {
+    const totalMs = periodEntries.reduce((sum, e) => {
+      const end = e.endTimestamp || Date.now();
+      return sum + (end - e.timestamp);
+    }, 0);
+    current = Math.round(totalMs / 60000);
+  } else {
+    current = periodEntries.length;
+  }
+
+  const bad =
+    direction === "atMost"
+      ? (habit.goalCount === 0 ? current > 0 : current > habit.goalCount)
+      : current < habit.goalCount;
+
+  return {
+    current,
+    goal: habit.goalCount,
+    period: habit.goalPeriod === "day" ? "today" : "this week",
+    bad,
+    direction,
+  };
+}
+
+function formatGoal(habit: Habit): string {
+  if (habit.goalCount == null || !habit.goalPeriod) return "";
+  const unit = habit.type === "timed" ? "min" : "";
+  const per = habit.goalPeriod === "day" ? "/day" : "/wk";
+  return `${habit.goalCount}${unit}${per}`;
+}
+
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleString(undefined, {
     month: "short",
@@ -193,6 +247,7 @@ export default function Home() {
           const elapsed = activeEntry
             ? Date.now() - activeEntry.timestamp
             : 0;
+          const progress = getGoalProgress(entries, habit);
 
           return (
             <button
@@ -202,7 +257,7 @@ export default function Home() {
                   ? handleTimedToggle(habit.id)
                   : handleCount(habit.id)
               }
-              className="flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all
+              className="flex flex-col items-center gap-1 p-5 rounded-2xl border-2 transition-all
                 hover:scale-105 active:scale-95 cursor-pointer"
               style={{
                 backgroundColor: isTimedActive ? habit.color + "20" : habit.bgColor,
@@ -229,6 +284,17 @@ export default function Home() {
                   style={{ color: habit.color, opacity: 0.7 }}
                 >
                   {since}
+                </span>
+              )}
+              {progress && (
+                <span
+                  className="text-xs font-medium"
+                  style={{
+                    color: progress.bad ? "#e53e3e" : (!progress.bad && progress.direction === "atLeast" && progress.current >= progress.goal) ? "#22c55e" : habit.color,
+                    opacity: 0.8,
+                  }}
+                >
+                  {progress.current}{habit.type === "timed" ? "m" : ""}/{progress.goal}{habit.type === "timed" ? "m" : ""} {progress.period}
                 </span>
               )}
               {habit.type === "timed" && (
