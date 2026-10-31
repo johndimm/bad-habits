@@ -56,6 +56,24 @@ export async function getHabits(): Promise<Habit[]> {
     }
     await tx.done;
     habits = seeded;
+  } else {
+    const defaults = new Map((defaultHabits as Habit[]).map((h) => [h.id, h]));
+    let needsUpdate = false;
+    habits = habits.map((h) => {
+      const def = defaults.get(h.id);
+      if (def && h.goalCount == null && def.goalCount != null) {
+        needsUpdate = true;
+        return { ...h, goalCount: def.goalCount, goalPeriod: def.goalPeriod, goalDirection: def.goalDirection };
+      }
+      return h;
+    });
+    if (needsUpdate) {
+      const tx = db.transaction("habits", "readwrite");
+      for (const h of habits) {
+        await tx.store.put(h);
+      }
+      await tx.done;
+    }
   }
   return habits.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
