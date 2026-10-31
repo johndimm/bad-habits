@@ -21,6 +21,7 @@ import {
 } from "@/lib/db";
 import type { Habit } from "@/lib/habits";
 import HabitEditor from "@/components/HabitEditor";
+import TimelineChart from "@/components/TimelineChart";
 
 interface DailyCount {
   date: string;
@@ -123,6 +124,74 @@ function formatGoal(habit: Habit): string {
   return `${habit.goalCount}${unit}${per}`;
 }
 
+function GoalRing({
+  progress,
+  habit,
+}: {
+  progress: { current: number; goal: number; period: string; bad: boolean; direction: "atMost" | "atLeast" };
+  habit: Habit;
+}) {
+  const size = 44;
+  const stroke = 4;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+
+  const goal = progress.goal;
+  const current = progress.current;
+  const unit = habit.type === "timed" ? "m" : "";
+
+  let frac: number;
+  if (goal === 0) {
+    frac = current > 0 ? 1 : 0;
+  } else {
+    frac = Math.min(current / goal, 1);
+  }
+
+  const fillColor = progress.bad
+    ? "#e53e3e"
+    : progress.direction === "atLeast" && current >= goal
+      ? "#22c55e"
+      : habit.color;
+
+  const offset = circ * (1 - frac);
+
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={habit.color}
+          strokeWidth={stroke}
+          opacity={0.15}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={fillColor}
+          strokeWidth={stroke}
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+        />
+      </svg>
+      <span
+        className="text-xs font-semibold -mt-8 mb-2"
+        style={{ color: fillColor }}
+      >
+        {current}{unit}/{goal}{unit}
+      </span>
+      <span className="text-[10px]" style={{ color: habit.color, opacity: 0.5 }}>
+        {progress.period}
+      </span>
+    </div>
+  );
+}
+
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleString(undefined, {
     month: "short",
@@ -212,7 +281,8 @@ export default function Home() {
     await refreshEntries();
   }
 
-  const dailyCounts = computeDailyCounts(entries, habits);
+  const countHabits = habits.filter((h) => h.type !== "timed");
+  const countCounts = computeDailyCounts(entries, countHabits);
 
   if (loading) {
     return (
@@ -287,15 +357,7 @@ export default function Home() {
                 </span>
               )}
               {progress && (
-                <span
-                  className="text-xs font-medium"
-                  style={{
-                    color: progress.bad ? "#e53e3e" : (!progress.bad && progress.direction === "atLeast" && progress.current >= progress.goal) ? "#22c55e" : habit.color,
-                    opacity: 0.8,
-                  }}
-                >
-                  {progress.current}{habit.type === "timed" ? "m" : ""}/{progress.goal}{habit.type === "timed" ? "m" : ""} {progress.period}
-                </span>
+                <GoalRing progress={progress} habit={habit} />
               )}
               {habit.type === "timed" && (
                 <span
@@ -310,16 +372,16 @@ export default function Home() {
         })}
       </div>
 
-      {/* Chart */}
-      {dailyCounts.length > 0 && (
+      {/* Count habits chart */}
+      {countCounts.length > 0 && countHabits.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">Usage Over Time</h2>
+          <h2 className="text-xl font-semibold mb-4">Counts</h2>
           <div
             className="rounded-xl border p-4 overflow-hidden"
             style={{ backgroundColor: "var(--background)" }}
           >
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dailyCounts}>
+              <BarChart data={countCounts}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis
                   dataKey="date"
@@ -350,7 +412,7 @@ export default function Home() {
                 <Legend
                   content={() => (
                     <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
-                      {habits.map((h) => (
+                      {countHabits.map((h) => (
                         <div key={h.id} className="flex items-center gap-1.5">
                           <span
                             className="w-3 h-3 rounded-sm inline-block shrink-0"
@@ -362,7 +424,7 @@ export default function Home() {
                     </div>
                   )}
                 />
-                {habits.map((habit) => (
+                {countHabits.map((habit) => (
                   <Bar
                     key={habit.id}
                     dataKey={habit.id}
@@ -376,6 +438,9 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Timed habits timeline */}
+      <TimelineChart entries={entries} habits={habits} />
 
       {/* Recent log with tabs */}
       <section>
