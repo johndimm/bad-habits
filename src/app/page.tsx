@@ -170,18 +170,17 @@ export default function Home() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-2">
-        <div />
-        <h1 className="text-3xl font-bold">Habits</h1>
+      <div className="relative mb-8">
+        <h1 className="text-3xl font-bold text-center">Habits</h1>
+        <p className="text-center opacity-50">bad or good</p>
         <button
           onClick={() => setShowEditor(true)}
-          className="text-2xl opacity-40 hover:opacity-100 cursor-pointer"
+          className="absolute right-0 top-1 text-2xl opacity-40 hover:opacity-100 cursor-pointer"
           title="Manage habits"
         >
           ⚙
         </button>
       </div>
-      <p className="text-center opacity-50 mb-8">bad or good</p>
 
       {/* Habit buttons */}
       <div className="grid grid-cols-2 gap-4 mb-10">
