@@ -2,16 +2,6 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend,
-} from "recharts";
-import {
   logHabit,
   getAllEntries,
   deleteEntry,
@@ -21,31 +11,8 @@ import {
 } from "@/lib/db";
 import type { Habit } from "@/lib/habits";
 import HabitEditor from "@/components/HabitEditor";
-import TimelineChart from "@/components/TimelineChart";
+import DayMap from "@/components/DayMap";
 
-interface DailyCount {
-  date: string;
-  [key: string]: string | number;
-}
-
-function computeDailyCounts(
-  entries: HabitEntry[],
-  habits: Habit[]
-): DailyCount[] {
-  const byDate: Record<string, Record<string, number>> = {};
-  for (const e of entries) {
-    const date = new Date(e.timestamp).toLocaleDateString("en-CA");
-    byDate[date] ??= {};
-    byDate[date][e.habit] = (byDate[date][e.habit] || 0) + 1;
-  }
-  const dates = Object.keys(byDate).sort();
-  return dates.map((date) => ({
-    date,
-    ...Object.fromEntries(
-      habits.map((h) => [h.id, byDate[date][h.id] || 0])
-    ),
-  }));
-}
 
 function timeSinceLast(entries: HabitEntry[], habit: string): string {
   const last = entries.find((e) => e.habit === habit);
@@ -117,12 +84,6 @@ function getGoalProgress(
   };
 }
 
-function formatGoal(habit: Habit): string {
-  if (habit.goalCount == null || !habit.goalPeriod) return "";
-  const unit = habit.type === "timed" ? "min" : "";
-  const per = habit.goalPeriod === "day" ? "/day" : "/wk";
-  return `${habit.goalCount}${unit}${per}`;
-}
 
 function GoalRing({
   progress,
@@ -281,8 +242,6 @@ export default function Home() {
     await refreshEntries();
   }
 
-  const countHabits = habits.filter((h) => h.type !== "timed");
-  const countCounts = computeDailyCounts(entries, countHabits);
 
   if (loading) {
     return (
@@ -372,75 +331,8 @@ export default function Home() {
         })}
       </div>
 
-      {/* Count habits chart */}
-      {countCounts.length > 0 && countHabits.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">Counts</h2>
-          <div
-            className="rounded-xl border p-4 overflow-hidden"
-            style={{ backgroundColor: "var(--background)" }}
-          >
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={countCounts}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={50}
-                  tickFormatter={(v: string) =>
-                    new Date(v + "T00:00:00").toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })
-                  }
-                />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                <Tooltip
-                  labelFormatter={(v) =>
-                    new Date(String(v) + "T00:00:00").toLocaleDateString(
-                      undefined,
-                      {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      }
-                    )
-                  }
-                />
-                <Legend
-                  content={() => (
-                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
-                      {countHabits.map((h) => (
-                        <div key={h.id} className="flex items-center gap-1.5">
-                          <span
-                            className="w-3 h-3 rounded-sm inline-block shrink-0"
-                            style={{ backgroundColor: h.color }}
-                          />
-                          <span className="text-xs sm:text-sm whitespace-nowrap">{h.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                />
-                {countHabits.map((habit) => (
-                  <Bar
-                    key={habit.id}
-                    dataKey={habit.id}
-                    name={habit.label}
-                    fill={habit.color}
-                    radius={[3, 3, 0, 0]}
-                  />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      )}
-
-      {/* Timed habits timeline */}
-      <TimelineChart entries={entries} habits={habits} />
+      {/* Today's activity map */}
+      <DayMap entries={entries} habits={habits} />
 
       {/* Recent log with tabs */}
       <section>
